@@ -1,0 +1,42 @@
+.PageHeader {
+  padding: 20px;
+}
+
+h1 {
+  font-size: 25px;
+}
+
+.PageBody{
+  padding-inline: 100px;
+}
+
+.CreateAccount {
+  width: 100%;
+  border-color: #AAAAAA;
+  border-style: dashed;
+  font-size: 18px;
+  font-weight: 600;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-block: 20px;
+}
+
+.CardSolid {
+  width: 100%;
+  border-color: #AAAAAA;
+  font-size: 18px;
+  font-weight: 600;
+  margin-block: 20px;
+}
+
+.InputButton{
+  margin-block: 10px;
+  float: right;
+}
+
+.gridStyle  {
+  width: 1/3;
+  text-align: center;
+};
