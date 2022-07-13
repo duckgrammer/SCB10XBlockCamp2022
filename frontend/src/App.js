@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import erc20abi from "./erc20ABI.json";
-import 'antd/dist/antd.css';
+import 'antd/dist/antd.min.css';
 import './index.css';
 import './App.css';
-import { Input, Button, Row, Col, Card, Form } from 'antd';
+import { Button, Row, Col, Card } from 'antd';
 import AccountCard from "./components/AccountCard";
 import CreateCard from "./components/CreateCard";
+import TransferCard from "./components/TransferCard";
+import NewCard from "./components/NewCard";
+import FXCard from "./components/FXCard";
 
 export default function App() {
   const [page, setPage] = useState("account");
@@ -96,12 +99,34 @@ export default function App() {
   }
 
   const transfer = async (e) => {
-    console.log(e);
+    console.log("transfer " + e);
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
     const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
     await erc20.transfer(e.name, e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
+  const withdraw = async (e) => {
+    console.log("withdraw " + e);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    await erc20.withdraw(e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
+  const deposit = async (e) => {
+    console.log("deposit " + e);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    await erc20.deposit(e.amount);
     setPage("account");
     getMyBalance();
   }
@@ -127,73 +152,23 @@ export default function App() {
           </h2>
           <Row>
             { page === "account" ? 
-              <Col span={24}>
-                <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance}/>
-                <Card type="dashed" className="CreateAccount" onClick={() => setPage("create")}>
-                    + Create Bank Account
-                </Card> 
-              </Col>
+                <Col span={24}>
+                  <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance}/>
+                  <NewCard setPage={setPage}/>
+                </Col>
             : 
               page === "create" ? 
-              <CreateCard createAccount={createAccount}/>
+                <CreateCard createAccount={createAccount}/>
             :
-              page === "deposit" ? "Deposit" :
-              page === "withdraw" ? "Withdraw" :
+              page === "deposit" ? 
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={deposit} text="deposit"/>
+             :
+              page === "withdraw" ? 
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={withdraw} text="withdraw"/>
+            :
               page === "transfer" ? 
-                <Card className="CardSolid">
-                  <Form
-                      name="basic"
-                      labelCol={{
-                      span: 8,
-                      }}
-                      wrapperCol={{
-                      span: 16,
-                      }}
-                      initialValues={{
-                      remember: true,
-                      }}
-                      onFinish={transfer}
-                      autoComplete="off"
-                  >
-                      <Form.Item
-                        label="Account Name"
-                        name="name"
-                        rules={[
-                            {
-                            required: true,
-                            message: 'Please input your account name!',
-                            },
-                        ]}
-                      >
-                      <Input />
-                      </Form.Item>
-
-                      <Form.Item
-                        label="Amount"
-                        name="amount"
-                        rules={[
-                            {
-                            required: true,
-                            message: 'Please input your amount!',
-                            },
-                        ]}
-                      >
-                          <Input addonAfter={contractInfo.tokenSymbol}/>                      
-                      </Form.Item>
-
-                      <Form.Item
-                      wrapperCol={{
-                          offset: 8,
-                          span: 16,
-                      }}
-                      >
-                      <Button className="InputButton" type="primary" htmlType="submit">
-                          Transfer
-                      </Button>
-                      </Form.Item>
-                  </Form>
-                </Card>
-              : "" }
+                <TransferCard tokenSymbol={contractInfo.tokenSymbol} transfer={transfer}/>
+            : "" }
           </Row>
         </Col>
       </Row>
