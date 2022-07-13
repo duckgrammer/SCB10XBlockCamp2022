@@ -4,7 +4,7 @@ import erc20abi from "./erc20ABI.json";
 import 'antd/dist/antd.min.css';
 import './index.css';
 import './App.css';
-import { Button, Row, Col, Card } from 'antd';
+import { Button, Row, Col } from 'antd';
 import AccountCard from "./components/AccountCard";
 import CreateCard from "./components/CreateCard";
 import TransferCard from "./components/TransferCard";
@@ -13,8 +13,9 @@ import FXCard from "./components/FXCard";
 
 export default function App() {
   const [page, setPage] = useState("account");
-  const [account, setAccount] = useState([]);
   const [txs, setTxs] = useState([]);
+  const [connectWallet, setConnectWallet] = useState(false);
+  const [connectBalance, setConnectBalance] = useState(false);
   const [contractListened, setContractListened] = useState();
   const [contractInfo, setContractInfo] = useState({
     address: "-",
@@ -60,6 +61,7 @@ export default function App() {
 
   // MY FUNCTIONS
   const getTokenInfo = async () => {
+    setConnectWallet(true);
     console.log("Get Token Info");
     const contractAddress = "0x819c9AB81857Bf54A8FCae941639B1b287Ed68A7";
     const provider = new ethers.providers.Web3Provider(window.ethereum);
@@ -76,9 +78,11 @@ export default function App() {
       tokenSymbol,
       totalSupply
     });
+    setConnectWallet(false);
   };
 
   const getMyBalance = async () => {
+    setConnectBalance(() => { return true; });
     console.log("Get My Balance");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
@@ -91,6 +95,10 @@ export default function App() {
       address: signerAddress,
       balance: String(balance)
     });
+
+    setConnectBalance(() => {
+      return false;
+    }, 6000);
   };
 
   const createAccount = (e) => {
@@ -138,7 +146,7 @@ export default function App() {
           <h1 style={{cursor: "pointer"}}>🚀 10XBank</h1>
         </Col>
         <Col flex="auto" style={{textAlign: "right"}}>
-          <Button onClick={() => getTokenInfo()}>
+          <Button onClick={() => getTokenInfo()} loading={connectWallet}>
             {balanceInfo.address === "-" ? "Connect Wallet" : balanceInfo.address}
           </Button>
         </Col>
@@ -155,7 +163,7 @@ export default function App() {
           <Row>
             { page === "account" ? 
                 <Col span={24}>
-                  <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance}/>
+                  <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance} connectBalance={connectBalance}/>
                   <NewCard setPage={setPage}/>
                 </Col>
             : 

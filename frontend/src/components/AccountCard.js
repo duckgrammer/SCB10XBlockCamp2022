@@ -1,7 +1,8 @@
 import { Row, Col, Card, Button, } from 'antd';
 import NumberFormat from 'react-number-format';
+import { ReloadOutlined } from '@ant-design/icons';
 
-const AccountCard = ({balance, tokenSymbol, setPage, getMyBalance}) => {
+const AccountCard = ({balance, tokenSymbol, setPage, getMyBalance, connectBalance}) => {
     return(
         <Card className="CardSolid" 
         actions={[
@@ -16,7 +17,13 @@ const AccountCard = ({balance, tokenSymbol, setPage, getMyBalance}) => {
             </Row>
             <Row>
             <Col span={8}>
-                <Button onClick={() => getMyBalance()} style={{marginRight: "10px"}}>Refresh</Button>
+                <Button shape="circle" 
+                loading={connectBalance}
+                onClick={() => getMyBalance()} 
+                style={{marginRight: "10px"}}
+                icon={<ReloadOutlined />}
+                type="primary"
+                />
                 Balance:
             </Col>
             <Col span={16}>
