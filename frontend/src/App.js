@@ -5,6 +5,8 @@ import 'antd/dist/antd.css';
 import './index.css';
 import './App.css';
 import { Input, Button, Row, Col, Card, Form } from 'antd';
+import AccountCard from "./components/AccountCard";
+import CreateCard from "./components/CreateCard";
 
 export default function App() {
   const [page, setPage] = useState("account");
@@ -23,8 +25,8 @@ export default function App() {
   });
 
   useEffect(() => {
-    getTokenInfo();
     if (contractInfo.address !== "-") {
+      getMyBalance();
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const erc20 = new ethers.Contract(
         contractInfo.address,
@@ -93,12 +95,23 @@ export default function App() {
     setPage("account");
   }
 
+  const transfer = async (e) => {
+    console.log(e);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    await erc20.transfer(e.name, e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
   return (
     <div>
       <Row className="PageHeader">
-        <Col span={12}><h1>🚀 10XBank</h1></Col>
+        <Col span={12} onClick={() => setPage("account")}><h1>🚀 10XBank</h1></Col>
         <Col span={12} style={{textAlign: "right"}}>
-          <Button onClick={getMyBalance}>
+          <Button onClick={() => getTokenInfo()}>
             {balanceInfo.address === "-" ? "Connect Wallet" : balanceInfo.address}
           </Button>
         </Col>
@@ -115,72 +128,72 @@ export default function App() {
           <Row>
             { page === "account" ? 
               <Col span={24}>
-                <Card className="CardSolid" 
-                actions={[
-                  <h3>Deposit</h3>,
-                  <h3>Withdraw</h3>,
-                  <h3>Transfer</h3>,
-                ]}
-                >
-                  <Row>
-                    <Col span={8}>Account Name:</Col>
-                    <Col span={16}>abcdefg</Col>
-                  </Row>
-                  <Row>
-                    <Col span={8}>Balance:</Col>
-                    <Col span={16}>{balanceInfo.balance + " " + contractInfo.tokenSymbol}</Col>
-                  </Row>
-                </Card>
+                <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance}/>
                 <Card type="dashed" className="CreateAccount" onClick={() => setPage("create")}>
-                  + Create Bank Account
+                    + Create Bank Account
                 </Card> 
               </Col>
             : 
               page === "create" ? 
-              <Card className="CardSolid">
-                <Form
-                  name="basic"
-                  labelCol={{
-                    span: 8,
-                  }}
-                  wrapperCol={{
-                    span: 16,
-                  }}
-                  initialValues={{
-                    remember: true,
-                  }}
-                  onFinish={createAccount}
-                  autoComplete="off"
-                >
-                  <Form.Item
-                    label="Account Name"
-                    name="name"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Please input your account name!',
-                      },
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-
-                  <Form.Item
-                    wrapperCol={{
-                      offset: 8,
-                      span: 16,
-                    }}
-                  >
-                    <Button className="InputButton" type="primary" htmlType="submit">
-                      Submit
-                    </Button>
-                  </Form.Item>
-                </Form>
-              </Card>  
+              <CreateCard createAccount={createAccount}/>
             :
               page === "deposit" ? "Deposit" :
               page === "withdraw" ? "Withdraw" :
-              page === "transfer" ? "Transfer" : "" }
+              page === "transfer" ? 
+                <Card className="CardSolid">
+                  <Form
+                      name="basic"
+                      labelCol={{
+                      span: 8,
+                      }}
+                      wrapperCol={{
+                      span: 16,
+                      }}
+                      initialValues={{
+                      remember: true,
+                      }}
+                      onFinish={transfer}
+                      autoComplete="off"
+                  >
+                      <Form.Item
+                        label="Account Name"
+                        name="name"
+                        rules={[
+                            {
+                            required: true,
+                            message: 'Please input your account name!',
+                            },
+                        ]}
+                      >
+                      <Input />
+                      </Form.Item>
+
+                      <Form.Item
+                        label="Amount"
+                        name="amount"
+                        rules={[
+                            {
+                            required: true,
+                            message: 'Please input your amount!',
+                            },
+                        ]}
+                      >
+                          <Input addonAfter={contractInfo.tokenSymbol}/>                      
+                      </Form.Item>
+
+                      <Form.Item
+                      wrapperCol={{
+                          offset: 8,
+                          span: 16,
+                      }}
+                      >
+                      <Button className="InputButton" type="primary" htmlType="submit">
+                          Transfer
+                      </Button>
+                      </Form.Item>
+                  </Form>
+                </Card>
+              : "" }
           </Row>
         </Col>
       </Row>
