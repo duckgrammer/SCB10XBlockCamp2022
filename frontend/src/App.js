@@ -134,8 +134,10 @@ export default function App() {
   return (
     <div>
       <Row className="PageHeader">
-        <Col span={12} onClick={() => setPage("account")}><h1>🚀 10XBank</h1></Col>
-        <Col span={12} style={{textAlign: "right"}}>
+        <Col flex="150px" onClick={() => setPage("account")}>
+          <h1 style={{cursor: "pointer"}}>🚀 10XBank</h1>
+        </Col>
+        <Col flex="auto" style={{textAlign: "right"}}>
           <Button onClick={() => getTokenInfo()}>
             {balanceInfo.address === "-" ? "Connect Wallet" : balanceInfo.address}
           </Button>
