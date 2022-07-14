@@ -121,8 +121,12 @@ export default function App() {
     }, 6000);
   };
 
-  const createAccount = (e) => {
-    console.log(e.name);
+  const createAccount = async (e) => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+    await erc20.createAccount(e.name);
     setPage("account");
   }
 
@@ -155,6 +159,17 @@ export default function App() {
     const signer = await provider.getSigner();
     const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
     await erc20.deposit(e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
+  const myTransfer = async (e) => {
+    console.log("transfer " + e);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+    await erc20.myTransfer(currAccount, e.name, e.amount);
     setPage("account");
     getMyBalance();
   }
@@ -228,7 +243,7 @@ export default function App() {
                 <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myWithdraw} text="withdraw"/>
             :
               page === "transfer" ? 
-                <TransferCard tokenSymbol={contractInfo.tokenSymbol} transfer={transfer}/>
+                <TransferCard tokenSymbol={contractInfo.tokenSymbol} transfer={myTransfer}/>
             : "" }
           </Row>
         </Col>
