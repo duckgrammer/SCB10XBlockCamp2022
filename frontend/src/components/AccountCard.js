@@ -2,18 +2,23 @@ import { Row, Col, Card, Button, } from 'antd';
 import NumberFormat from 'react-number-format';
 import { ReloadOutlined } from '@ant-design/icons';
 
-const AccountCard = ({balance, tokenSymbol, setPage, getMyBalance, connectBalance}) => {
+const AccountCard = ({balance, tokenSymbol, setPage, getMyBalance, connectBalance, name, setCurrAccount}) => {
+    const onFunction = (action) => {
+        setCurrAccount(name);
+        setPage(action);
+    }
+
     return(
         <Card className="CardSolid" 
         actions={[
-            <h3 onClick={() => setPage("deposit")}>Deposit</h3>,
-            <h3 onClick={() => setPage("withdraw")}>Withdraw</h3>,
-            <h3 onClick={() => setPage("transfer")}>Transfer</h3>
+            <h3 onClick={() => onFunction("deposit")}>Deposit</h3>,
+            <h3 onClick={() => onFunction("withdraw")}>Withdraw</h3>,
+            <h3 onClick={() => onFunction("transfer")}>Transfer</h3>
         ]}
         >
             <Row>
             <Col span={8}>Account Name:</Col>
-            <Col span={16}>abcdefg</Col>
+            <Col span={16}>{name}</Col>
             </Row>
             <Row>
             <Col span={8}>

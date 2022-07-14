@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import erc20abi from "./erc20ABI.json";
+//import erc20abi from "./erc20ABI.json";
+import daiABI from "./daiABI.json";
 import 'antd/dist/antd.min.css';
 import './index.css';
 import './App.css';
@@ -27,14 +28,18 @@ export default function App() {
     address: "-",
     balance: "-"
   });
+  const [accounts, setAccounts] = useState([]);
+  const [accountBalance, setAccountBalance] = useState([]);
+  const [currAccount, setCurrAccount] = useState("");
 
   useEffect(() => {
     if (contractInfo.address !== "-") {
       getMyBalance();
+      getAccounts();
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const erc20 = new ethers.Contract(
         contractInfo.address,
-        erc20abi,
+        daiABI,
         provider
       );
 
@@ -63,10 +68,10 @@ export default function App() {
   const getTokenInfo = async () => {
     setConnectWallet(true);
     console.log("Get Token Info");
-    const contractAddress = "0x819c9AB81857Bf54A8FCae941639B1b287Ed68A7";
+    const contractAddress = "0x74Ed4e01E31F1f3896B8c2d37D0279627bD5CF40";
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    const erc20 = new ethers.Contract(contractAddress, erc20abi, provider);
+    const erc20 = new ethers.Contract(contractAddress, daiABI, provider);
 
     const tokenName = await erc20.name();
     const tokenSymbol = await erc20.symbol();
@@ -81,12 +86,27 @@ export default function App() {
     setConnectWallet(false);
   };
 
+  const getAccounts = async () => {
+    console.log("Get Accounts");
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, provider);
+    const allAccounts = await erc20.myAccounts();
+    setAccounts(allAccounts);
+
+    setAccountBalance([]);
+    for(let i = 0; i < allAccounts.length; i++){
+      const temp = await erc20.accountInfo(allAccounts[i]);
+      setAccountBalance(accountBalance => [...accountBalance, parseInt(temp._hex, 16)]);
+    }
+  }
+
   const getMyBalance = async () => {
     setConnectBalance(() => { return true; });
     console.log("Get My Balance");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
-    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, provider);
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, provider);
     const signer = await provider.getSigner();
     const signerAddress = await signer.getAddress();
     const balance = await erc20.balanceOf(signerAddress);
@@ -111,7 +131,7 @@ export default function App() {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
     await erc20.transfer(e.name, e.amount);
     setPage("account");
     getMyBalance();
@@ -122,7 +142,7 @@ export default function App() {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
     await erc20.withdraw(e.amount);
     setPage("account");
     getMyBalance();
@@ -133,8 +153,30 @@ export default function App() {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, erc20abi, signer);
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
     await erc20.deposit(e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
+  const myDeposit = async (e) => {
+    console.log("deposit " + currAccount + e.amount);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+    await erc20.myDeposit(currAccount, e.amount);
+    setPage("account");
+    getMyBalance();
+  }
+
+  const myWithdraw = async (e) => {
+    console.log("deposit " + currAccount + e.amount);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = await provider.getSigner();
+    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+    await erc20.myWithdraw(currAccount, e.amount);
     setPage("account");
     getMyBalance();
   }
@@ -163,7 +205,16 @@ export default function App() {
           <Row>
             { page === "account" ? 
                 <Col span={24}>
-                  <AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance} connectBalance={connectBalance}/>
+                  {accounts.map((account, index) =>
+                    <AccountCard key={account}
+                    name={account}
+                    balance={accountBalance[index]} 
+                    tokenSymbol={contractInfo.tokenSymbol} 
+                    setPage={setPage} setCurrAccount={setCurrAccount}
+                    getMyBalance={getMyBalance} 
+                    connectBalance={connectBalance}/>
+                  )}
+                  {/*<AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance} connectBalance={connectBalance}/>*/}
                   <NewCard setPage={setPage}/>
                 </Col>
             : 
@@ -171,10 +222,10 @@ export default function App() {
                 <CreateCard createAccount={createAccount}/>
             :
               page === "deposit" ? 
-                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={deposit} text="deposit"/>
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myDeposit} text="deposit"/>
              :
               page === "withdraw" ? 
-                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={withdraw} text="withdraw"/>
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myWithdraw} text="withdraw"/>
             :
               page === "transfer" ? 
                 <TransferCard tokenSymbol={contractInfo.tokenSymbol} transfer={transfer}/>
