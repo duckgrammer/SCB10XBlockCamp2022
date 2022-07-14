@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-//import erc20abi from "./erc20ABI.json";
+import { ReloadOutlined } from '@ant-design/icons';
 import daiABI from "./daiABI.json";
 import 'antd/dist/antd.min.css';
 import './index.css';
@@ -99,6 +99,10 @@ export default function App() {
       const temp = await erc20.accountInfo(allAccounts[i]);
       setAccountBalance(accountBalance => [...accountBalance, parseInt(temp._hex, 16)]);
     }
+  }
+
+  const refreshBalance = async () => {
+    getAccounts();
   }
 
   const getMyBalance = async () => {
@@ -203,6 +207,13 @@ export default function App() {
           <h1 style={{cursor: "pointer"}}>🚀 10XBank</h1>
         </Col>
         <Col flex="auto" style={{textAlign: "right"}}>
+          <Button shape="circle" 
+            loading={connectBalance}
+            onClick={() => refreshBalance()} 
+            style={{marginRight: "10px"}}
+            icon={<ReloadOutlined />}
+            type="primary"
+          />
           <Button onClick={() => getTokenInfo()} loading={connectWallet}>
             {balanceInfo.address === "-" ? "Connect Wallet" : balanceInfo.address}
           </Button>
@@ -226,8 +237,7 @@ export default function App() {
                     balance={accountBalance[index]} 
                     tokenSymbol={contractInfo.tokenSymbol} 
                     setPage={setPage} setCurrAccount={setCurrAccount}
-                    getMyBalance={getMyBalance} 
-                    connectBalance={connectBalance}/>
+                    />
                   )}
                   {/*<AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance} connectBalance={connectBalance}/>*/}
                   <NewCard setPage={setPage}/>
