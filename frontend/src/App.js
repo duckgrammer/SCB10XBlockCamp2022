@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import { ReloadOutlined } from '@ant-design/icons';
 import daiABI from "./daiABI.json";
 import 'antd/dist/antd.min.css';
 import './index.css';
 import './App.css';
-import { Button, Row, Col } from 'antd';
+import { Row, Col, Modal } from 'antd';
 import AccountCard from "./components/AccountCard";
 import CreateCard from "./components/CreateCard";
 import TransferCard from "./components/TransferCard";
 import NewCard from "./components/NewCard";
 import FXCard from "./components/FXCard";
+import ConnectWallet from "./components/ConnectWallet";
+import Refresh from "./components/Refresh";
 
 export default function App() {
   const [page, setPage] = useState("account");
@@ -35,7 +36,7 @@ export default function App() {
   useEffect(() => {
     if (contractInfo.address !== "-") {
       getMyBalance();
-      getAccounts();
+      //getAccounts();
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const erc20 = new ethers.Contract(
         contractInfo.address,
@@ -44,8 +45,6 @@ export default function App() {
       );
 
       erc20.on("Transfer", (from, to, amount, event) => {
-        console.log({ from, to, amount, event });
-
         setTxs((currentTxs) => [
           ...currentTxs,
           {
@@ -64,11 +63,15 @@ export default function App() {
     }
   }, [contractInfo.address]);
 
-  // MY FUNCTIONS
+  useEffect(() => {
+    if (balanceInfo.address !== "-") {
+     getAccounts();
+    }
+  }, [balanceInfo.address]);
+
   const getTokenInfo = async () => {
     setConnectWallet(true);
-    console.log("Get Token Info");
-    const contractAddress = "0x74Ed4e01E31F1f3896B8c2d37D0279627bD5CF40";
+    const contractAddress = "0x857c7492F3027BD2433b92BB4F256571761Eed53";
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
     const erc20 = new ethers.Contract(contractAddress, daiABI, provider);
@@ -87,12 +90,12 @@ export default function App() {
   };
 
   const getAccounts = async () => {
-    console.log("Get Accounts");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const erc20 = new ethers.Contract(contractInfo.address, daiABI, provider);
-    const allAccounts = await erc20.myAccounts();
+    const allAccounts = await erc20.myAccounts(balanceInfo.address);
     setAccounts(allAccounts);
+    console.log(allAccounts);
 
     setAccountBalance([]);
     for(let i = 0; i < allAccounts.length; i++){
@@ -107,7 +110,6 @@ export default function App() {
 
   const getMyBalance = async () => {
     setConnectBalance(() => { return true; });
-    console.log("Get My Balance");
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
     const erc20 = new ethers.Contract(contractInfo.address, daiABI, provider);
@@ -134,71 +136,73 @@ export default function App() {
     setPage("account");
   }
 
-  const transfer = async (e) => {
-    console.log("transfer " + e);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.transfer(e.name, e.amount);
-    setPage("account");
-    getMyBalance();
-  }
-
-  const withdraw = async (e) => {
-    console.log("withdraw " + e);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.withdraw(e.amount);
-    setPage("account");
-    getMyBalance();
-  }
-
-  const deposit = async (e) => {
-    console.log("deposit " + e);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.deposit(e.amount);
-    setPage("account");
-    getMyBalance();
+  const Transfer = async (e) => {
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+      await erc20.transfer(e.name, e.amount*99);
+      await erc20.transactionFee(currAccount, e.amount*100);
+      setPage("account");
+      getMyBalance();
+    }
+    catch {
+      error("Error transfering into account", "Make sure you entered a valid wallet and ammount. Make sure you have enough money in your wallet.");
+    }
   }
 
   const myTransfer = async (e) => {
-    console.log("transfer " + e);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.myTransfer(currAccount, e.name, e.amount);
-    setPage("account");
-    getMyBalance();
+    try{
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+      await erc20.myTransfer(currAccount, e.name, e.amount*100);
+      setPage("account");
+      getMyBalance();
+    }
+    catch {
+      error("Error transfering into account", "Make sure you entered a valid account and ammount. Make sure you have enough money in your wallet.");
+    }
   }
 
   const myDeposit = async (e) => {
-    console.log("deposit " + currAccount + e.amount);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.myDeposit(currAccount, e.amount);
-    setPage("account");
-    getMyBalance();
+    try {
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+      await erc20.myDeposit(currAccount, e.amount*100);
+      setPage("account");
+      getMyBalance();
+    }
+    catch {
+      error("Error depositing into account", "Make sure you entered a valid amount. Make sure you have enough money in your wallet.");
+    }
   }
 
   const myWithdraw = async (e) => {
-    console.log("deposit " + currAccount + e.amount);
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
-    await erc20.myWithdraw(currAccount, e.amount);
-    setPage("account");
-    getMyBalance();
+    try{
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+      await erc20.myWithdraw(currAccount, e.amount*100);
+      setPage("account");
+      getMyBalance();
+    }
+    catch{
+      error("Error withdrawing from account", "Make sure you entered a valid amount. Make sure have enough money in your account.");
+    }
   }
+
+  const error = (title, message) => {
+    Modal.error({
+      title: title,
+      content: message,
+    });
+  };
 
   return (
     <div>
@@ -207,16 +211,8 @@ export default function App() {
           <h1 style={{cursor: "pointer"}}>🚀 10XBank</h1>
         </Col>
         <Col flex="auto" style={{textAlign: "right"}}>
-          <Button shape="circle" 
-            loading={connectBalance}
-            onClick={() => refreshBalance()} 
-            style={{marginRight: "10px"}}
-            icon={<ReloadOutlined />}
-            type="primary"
-          />
-          <Button onClick={() => getTokenInfo()} loading={connectWallet}>
-            {balanceInfo.address === "-" ? "Connect Wallet" : balanceInfo.address}
-          </Button>
+          <Refresh connectBalance={connectBalance} refreshBalance={refreshBalance}/>
+          <ConnectWallet getTokenInfo={getTokenInfo} connectWallet={connectWallet} balanceInfo={balanceInfo}/>
         </Col>
       </Row>
       <Row className="PageBody">
@@ -230,18 +226,13 @@ export default function App() {
           </h2>
           <Row>
             { page === "account" ? 
-                <Col span={24}>
+                <>
                   {accounts.map((account, index) =>
-                    <AccountCard key={account}
-                    name={account}
-                    balance={accountBalance[index]} 
-                    tokenSymbol={contractInfo.tokenSymbol} 
-                    setPage={setPage} setCurrAccount={setCurrAccount}
-                    />
+                    <AccountCard key={account} name={account} balance={accountBalance[index]} 
+                    tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} setCurrAccount={setCurrAccount}/>
                   )}
-                  {/*<AccountCard balance={balanceInfo.balance} tokenSymbol={contractInfo.tokenSymbol} setPage={setPage} getMyBalance={getMyBalance} connectBalance={connectBalance}/>*/}
                   <NewCard setPage={setPage}/>
-                </Col>
+                </>
             : 
               page === "create" ? 
                 <CreateCard createAccount={createAccount}/>
@@ -253,7 +244,7 @@ export default function App() {
                 <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myWithdraw} text="withdraw"/>
             :
               page === "transfer" ? 
-                <TransferCard tokenSymbol={contractInfo.tokenSymbol} transfer={myTransfer}/>
+                <TransferCard tokenSymbol={contractInfo.tokenSymbol} myTransfer={myTransfer} transfer={Transfer}/>
             : "" }
           </Row>
         </Col>
