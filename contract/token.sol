@@ -36,14 +36,13 @@ contract ERC20Interface {
     function transferFrom(address from, address to, uint tokens) public returns (bool success);
  
     // DAI Token Functions
-    function withdraw(uint tokens) public returns (bool success);
-    function deposit(uint tokens) public returns (bool success);
     function createAccount(string accountName) public returns (bool success);
     function accountInfo(string accountName) public constant returns (uint);
     function myWithdraw(string accountName, uint tokens) public returns (bool success);
     function myDeposit(string accountName, uint tokens) public returns (bool success);
     function myTransfer(string accountNameFrom, string accountNameTo, uint tokens) public returns (bool success);
-    function myAccounts() public constant returns (string[] names);
+    function myAccounts(address currWallet) public constant returns (string[] names);
+    function transactionFee(string accountName, uint tokens) public returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
@@ -61,13 +60,11 @@ contract DAIToken is ERC20Interface, SafeMath {
     string public  name;
     uint8 public decimals;
     uint public _totalSupply;
+    address private MASTER_WALLET = 0x9EF13666C9c446Bb5cEe2bC02d8AD53F8758fDFF;
  
     mapping(address => uint) balances;
-    struct Set{
-        string[] account_names;
-        mapping(string => uint) account_balance;
-    }
-    Set my_accounts;
+    mapping(string => uint) account_balance;
+    mapping(address => string[]) wallet_account;
     mapping(address => mapping(address => uint)) allowed;
  
     constructor() public {
@@ -75,52 +72,54 @@ contract DAIToken is ERC20Interface, SafeMath {
         name = "DAI Token";
         decimals = 2;
         _totalSupply = 100000;
-        balances[0x9EF13666C9c446Bb5cEe2bC02d8AD53F8758fDFF] = _totalSupply;
-        emit Transfer(address(0), 0x9EF13666C9c446Bb5cEe2bC02d8AD53F8758fDFF, _totalSupply);
+        balances[MASTER_WALLET] = _totalSupply;
+        emit Transfer(address(0), MASTER_WALLET, _totalSupply);
     }
 
     function createAccount(string accountName) public returns (bool success) {
-        my_accounts.account_names.push(accountName);
-        my_accounts.account_balance[accountName] = 0;
+        account_balance[accountName] = 0;
+
+        wallet_account[msg.sender].push(accountName);
         return true;
     }
 
     function accountInfo(string accountName) public constant returns (uint) {
-        return my_accounts.account_balance[accountName];
+        return account_balance[accountName];
     }
 
     function myWithdraw(string accountName, uint tokens) public returns (bool success) {
-        my_accounts.account_balance[accountName] = safeSub(my_accounts.account_balance[accountName], tokens);
+        account_balance[accountName] = safeSub(account_balance[accountName], tokens);
+        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
+        emit Transfer(msg.sender, address(this), tokens);
         return true;
     }
 
     function myDeposit(string accountName, uint tokens) public returns (bool success) {
-        my_accounts.account_balance[accountName] = safeAdd(my_accounts.account_balance[accountName], tokens);
-        return true;
-    }
-
-    function myTransfer(string accountNameFrom, string accountNameTo, uint tokens) public returns (bool success) {
-        myWithdraw(accountNameFrom, tokens);
-        myDeposit(accountNameTo, tokens);
-        return true;
-    }
-
-    function myAccounts() public constant returns (string[] names) {
-        return my_accounts.account_names;
-    }
-
-    function withdraw(uint tokens) public returns (bool success) {
+        account_balance[accountName] = safeAdd(account_balance[accountName], tokens);
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
         emit Transfer(address(this), msg.sender, tokens);
         return true;
     }
 
-    function deposit(uint tokens) public returns (bool success) {
-        balances[msg.sender] = safeAdd(balances[msg.sender], tokens);
-        emit Transfer(msg.sender, address(this), tokens);
+    function transactionFee(string accountName, uint tokens) public returns (bool success) {
+        account_balance[accountName] = safeSub(account_balance[accountName], tokens);
+        if(MASTER_WALLET != msg.sender){
+            transfer(MASTER_WALLET, tokens/100);
+        }
         return true;
     }
- 
+
+    function myTransfer(string accountNameFrom, string accountNameTo, uint tokens) public returns (bool success) {
+        account_balance[accountNameFrom] = safeSub(account_balance[accountNameFrom], tokens);
+        account_balance[accountNameTo] = safeAdd(account_balance[accountNameTo], tokens);
+        return true;
+    }
+
+    function myAccounts(address currWallet) public constant returns (string[] names) {
+        //return my_accounts.account_names;
+        return wallet_account[currWallet];
+    }
+
     function totalSupply() public constant returns (uint) {
         return _totalSupply  - balances[address(0)];
     }

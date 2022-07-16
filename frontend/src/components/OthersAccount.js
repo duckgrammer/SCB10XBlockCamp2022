@@ -1,5 +1,6 @@
 import { Input, Button, Form, Row, Col } from 'antd';
 import { useState } from "react";
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 
 const OthersAccount = ({transfer, tokenSymbol}) => {
     const [amount, setAmount] = useState(0);
@@ -29,6 +30,53 @@ const OthersAccount = ({transfer, tokenSymbol}) => {
             >
             <Input />
             </Form.Item>
+
+            <Form.List name="names" >
+                {(fields, { add, remove }) => (
+                <>
+                    {fields.map((field, index) => (
+                        <Form.Item
+                            label={'Account Name ' + (index+2)}
+                            required={false}
+                            key={field.key}
+                        >
+                            <Form.Item
+                                {...field}
+                                validateTrigger={['onChange', 'onBlur']}
+                                rules={[
+                                    {
+                                    required: true,
+                                    whitespace: true,
+                                    message: "Please input passenger's name.",
+                                    },
+                                ]}
+                                noStyle
+                                >
+                                    <Input style={{ width: '60%' }} />
+                                </Form.Item>
+                                {fields.length > 0 ? (
+                                <MinusCircleOutlined
+                                    style={{ padding: "10px" }}
+                                    className="dynamic-delete-button"
+                                    onClick={() => remove(field.name)}
+                            /> ) : null}
+                        </Form.Item>
+                    ))}
+                    <Form.Item label=" ">
+                        <Button
+                            type="dashed"
+                            onClick={() => add()}
+                            style={{
+                                width: '60%',
+                            }}
+                            icon={<PlusOutlined />}
+                        >
+                            Add field
+                        </Button>
+                    </Form.Item>
+                </>
+                )}
+            </Form.List>
 
             <Form.Item
             label="Amount"

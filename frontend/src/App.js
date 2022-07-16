@@ -36,7 +36,6 @@ export default function App() {
   useEffect(() => {
     if (contractInfo.address !== "-") {
       getMyBalance();
-      //getAccounts();
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const erc20 = new ethers.Contract(
         contractInfo.address,
@@ -71,7 +70,7 @@ export default function App() {
 
   const getTokenInfo = async () => {
     setConnectWallet(true);
-    const contractAddress = "0x857c7492F3027BD2433b92BB4F256571761Eed53";
+    const contractAddress = "0xBd8639cb8395e783806449B0bd996e4c021F6107";
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
     const erc20 = new ethers.Contract(contractAddress, daiABI, provider);
@@ -95,7 +94,6 @@ export default function App() {
     const erc20 = new ethers.Contract(contractInfo.address, daiABI, provider);
     const allAccounts = await erc20.myAccounts(balanceInfo.address);
     setAccounts(allAccounts);
-    console.log(allAccounts);
 
     setAccountBalance([]);
     for(let i = 0; i < allAccounts.length; i++){
@@ -144,23 +142,28 @@ export default function App() {
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
       await erc20.transfer(e.name, e.amount*99);
       await erc20.transactionFee(currAccount, e.amount*100);
+      for(var i = 0; i < e.names.length; i++){
+        await erc20.transfer(e.names[i], e.amount*99);
+        await erc20.transactionFee(currAccount, e.amount*100);
+      }
       setPage("account");
-      getMyBalance();
     }
     catch {
       error("Error transfering into account", "Make sure you entered a valid wallet and ammount. Make sure you have enough money in your wallet.");
     }
   }
 
-  const myTransfer = async (e) => {
+  const myTransferOwn = async (e) => {
     try{
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
       await erc20.myTransfer(currAccount, e.name, e.amount*100);
+      for(var i = 0; i < e.names.length; i++){
+        await erc20.myTransfer(currAccount, e.names[i], e.amount*100);
+      }
       setPage("account");
-      getMyBalance();
     }
     catch {
       error("Error transfering into account", "Make sure you entered a valid account and ammount. Make sure you have enough money in your wallet.");
@@ -175,7 +178,6 @@ export default function App() {
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
       await erc20.myDeposit(currAccount, e.amount*100);
       setPage("account");
-      getMyBalance();
     }
     catch {
       error("Error depositing into account", "Make sure you entered a valid amount. Make sure you have enough money in your wallet.");
@@ -190,7 +192,6 @@ export default function App() {
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
       await erc20.myWithdraw(currAccount, e.amount*100);
       setPage("account");
-      getMyBalance();
     }
     catch{
       error("Error withdrawing from account", "Make sure you entered a valid amount. Make sure have enough money in your account.");
@@ -244,7 +245,7 @@ export default function App() {
                 <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myWithdraw} text="withdraw"/>
             :
               page === "transfer" ? 
-                <TransferCard tokenSymbol={contractInfo.tokenSymbol} myTransfer={myTransfer} transfer={Transfer}/>
+                <TransferCard tokenSymbol={contractInfo.tokenSymbol} myTransfer={myTransferOwn} transfer={Transfer}/>
             : "" }
           </Row>
         </Col>
