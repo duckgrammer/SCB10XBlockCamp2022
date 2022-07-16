@@ -1,9 +1,13 @@
-# SCB10XBlockCamp2022
+# 🚀 SCB10XBlockCamp2022
 Simulating a banking app on the blockchain. The app is able to deposit, withdraw, and transfer 'DAI tokens.' The user is also able to create multiple accounts in one wallet and transfer between them.
+
+![account](https://github.com/panda3141592/SCB10XBlockCamp2022/blob/main/image/account.png?raw=true)
 
 [BONUS] Deduct 1% of transaction to other's account as platoform free
 
 [BONUS] Transfer to multiple accounts at the same time.
+
+![transfer](https://github.com/panda3141592/SCB10XBlockCamp2022/blob/main/image/transfer.png?raw=true)
 
 ## Installation and Running
 frontend:
