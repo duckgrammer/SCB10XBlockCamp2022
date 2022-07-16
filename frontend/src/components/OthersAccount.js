@@ -36,7 +36,7 @@ const OthersAccount = ({transfer, tokenSymbol}) => {
                 <>
                     {fields.map((field, index) => (
                         <Form.Item
-                            label={'Account Name ' + (index+2)}
+                            label={'Wallet Address ' + (index+2)}
                             required={false}
                             key={field.key}
                         >

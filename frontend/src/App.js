@@ -74,7 +74,7 @@ export default function App() {
 
   const getTokenInfo = async () => {
     setConnectWallet(true);
-    const contractAddress = "0xBd8639cb8395e783806449B0bd996e4c021F6107";
+    const contractAddress = "0x5e864e0b66D56985288D27cE4Ed5305b14979305";
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
     const erc20 = new ethers.Contract(contractAddress, daiABI, provider);
@@ -139,16 +139,21 @@ export default function App() {
   }
 
   const Transfer = async (e) => {
+    console.log(e);
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
+      await erc20.myWithdraw(currAccount, e.amount*100);
       await erc20.transfer(e.name, e.amount*99);
-      await erc20.transactionFee(currAccount, e.amount*100);
-      for(var i = 0; i < e.names.length; i++){
-        await erc20.transfer(e.names[i], e.amount*99);
-        await erc20.transactionFee(currAccount, e.amount*100);
+      await erc20.transactionFee(e.amount*100);
+      if(typeof e.names !== "undefined"){
+        for(var i = 0; i < e.names.length; i++){
+          await erc20.myWithdraw(currAccount, e.amount*100);
+          await erc20.transfer(e.names[i], e.amount*99);
+          await erc20.transactionFee(e.amount*100);
+        }
       }
       setPage("account");
     }
@@ -157,15 +162,17 @@ export default function App() {
     }
   }
 
-  const myTransferOwn = async (e) => {
+  const myOwnTransfer = async (e) => {
     try{
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
       const signer = await provider.getSigner();
       const erc20 = new ethers.Contract(contractInfo.address, daiABI, signer);
       await erc20.myTransfer(currAccount, e.name, e.amount*100);
-      for(var i = 0; i < e.names.length; i++){
-        await erc20.myTransfer(currAccount, e.names[i], e.amount*100);
+      if(typeof e.names !== "undefined"){
+        for(var i = 0; i < e.names.length; i++){
+          await erc20.myTransfer(currAccount, e.names[i], e.amount*100);
+        }
       }
       setPage("account");
     }
@@ -174,7 +181,7 @@ export default function App() {
     }
   }
 
-  const myDeposit = async (e) => {
+  const myOwnDeposit = async (e) => {
     try {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
@@ -188,7 +195,7 @@ export default function App() {
     }
   }
 
-  const myWithdraw = async (e) => {
+  const myOwnWithdraw = async (e) => {
     try{
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       await provider.send("eth_requestAccounts", []);
@@ -243,13 +250,13 @@ export default function App() {
                 <CreateCard createAccount={createAccount}/>
             :
               page === "deposit" ? 
-                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myDeposit} text="deposit"/>
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myOwnDeposit} text="deposit"/>
              :
               page === "withdraw" ? 
-                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myWithdraw} text="withdraw"/>
+                <FXCard tokenSymbol={contractInfo.tokenSymbol} fx={myOwnWithdraw} text="withdraw"/>
             :
               page === "transfer" ? 
-                <TransferCard tokenSymbol={contractInfo.tokenSymbol} myTransfer={myTransferOwn} transfer={Transfer}/>
+                <TransferCard tokenSymbol={contractInfo.tokenSymbol} myTransfer={myOwnTransfer} transfer={Transfer}/>
             : "" }
           </Row>
         </Col>

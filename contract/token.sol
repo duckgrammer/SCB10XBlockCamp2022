@@ -42,7 +42,7 @@ contract ERC20Interface {
     function myDeposit(string accountName, uint tokens) public returns (bool success);
     function myTransfer(string accountNameFrom, string accountNameTo, uint tokens) public returns (bool success);
     function myAccounts(address currWallet) public constant returns (string[] names);
-    function transactionFee(string accountName, uint tokens) public returns (bool success);
+    function transactionFee(uint tokens) public returns (bool success);
 
     event Transfer(address indexed from, address indexed to, uint tokens);
     event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
@@ -101,8 +101,7 @@ contract DAIToken is ERC20Interface, SafeMath {
         return true;
     }
 
-    function transactionFee(string accountName, uint tokens) public returns (bool success) {
-        account_balance[accountName] = safeSub(account_balance[accountName], tokens);
+    function transactionFee(uint tokens) public returns (bool success) {
         if(MASTER_WALLET != msg.sender){
             transfer(MASTER_WALLET, tokens/100);
         }
