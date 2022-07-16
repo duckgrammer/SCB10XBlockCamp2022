@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import daiABI from "./daiABI.json";
+import { Row, Col, Modal } from 'antd';
+
+//Style Sheets
 import 'antd/dist/antd.min.css';
 import './index.css';
 import './App.css';
-import { Row, Col, Modal } from 'antd';
+
+//Components
 import AccountCard from "./components/AccountCard";
 import CreateCard from "./components/CreateCard";
 import TransferCard from "./components/TransferCard";
